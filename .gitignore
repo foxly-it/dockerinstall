@@ -1,0 +1,29 @@
+# Ignore all files by default
+*
+
+# But keep the main installation scripts
+!install.sh
+!uninstall.sh
+
+# Keep documentation
+!README.md
+
+# Keep the .gitignore itself
+!.gitignore
+
+# Ignore common system files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Ignore log files
+*.log
+
+# Ignore temporary files
+*.tmp
+*.temp
+*~

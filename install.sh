@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Rootful Docker + Compose v2 (Debian 12 / Ubuntu 24.04)
+# Rootful Docker + Compose v2 (Debian 12/13, Ubuntu 24.04)
 
 set -euo pipefail
 
@@ -13,18 +13,21 @@ die(){  err "$*"; exit 1; }
 LOGFILE="/var/log/docker-install.log"
 ADD_USER=""   # optional: Benutzer der docker-Gruppe hinzufügen
 NO_HELLO=""
+NO_CLEAR=""
 
 # ---------- Args ----------
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --add-user) shift; ADD_USER="${1:-}";;
     --no-hello) NO_HELLO="1";;
+    --no-clear) NO_CLEAR="1";;
     --log-file=*) LOGFILE="${1#*=}";;
     -h|--help)
       cat <<EOF
-Usage: sudo ./install.sh [--add-user <username>] [--no-hello] [--log-file=/path/file.log]
+Usage: sudo ./install.sh [--add-user <username>] [--no-hello] [--no-clear] [--log-file=/path/file.log]
   --add-user USER   Fügt USER der 'docker'-Gruppe hinzu (root-ähnliche Rechte!)
   --no-hello        Überspringt 'docker run hello-world' Kurztest
+  --no-clear        Bildschirm nicht löschen
   --log-file=PATH   Pfad fürs Logfile (Default: $LOGFILE)
 EOF
       exit 0
@@ -37,41 +40,46 @@ done
 [[ $EUID -eq 0 ]] || die "Bitte als root ausführen (sudo ./install.sh)."
 [[ -r /etc/os-release ]] || die "/etc/os-release nicht gefunden."
 . /etc/os-release
-OS="${ID:-}"; CODENAME="${VERSION_CODENAME:-}"
+OS="${ID:-}"
+CODENAME="${VERSION_CODENAME:-$(lsb_release -cs 2>/dev/null || echo '')}"
+[[ -n "$CODENAME" ]] || die "Konnte Debian/Ubuntu-Codename nicht ermitteln."
 [[ "$OS" =~ ^(debian|ubuntu)$ ]] || die "Nur Debian/Ubuntu werden unterstützt."
 
 # ---------- Logging / Clean screen ----------
 mkdir -p "$(dirname "$LOGFILE")"
 exec > >(stdbuf -oL tee -a "$LOGFILE") 2>&1
-echo -ne "\033c"  # Clear Screen
+[[ -z "$NO_CLEAR" ]] && echo -ne "\033c"  # Clear Screen optional
 info "Logfile: $LOGFILE"
 info "Erkannt: ${PRETTY_NAME:-$OS} ($CODENAME) – Arch: $(dpkg --print-architecture)"
 
 # ---------- 1) Konfliktpakete entfernen ----------
 info "Entferne evtl. konfliktierende Pakete…"
-if [[ "$OS" == "ubuntu" ]]; then
-  apt-get remove -y docker.io docker-doc docker-compose docker-compose-v2 podman-docker containerd runc || true
-else
-  apt-get remove -y docker.io docker-doc docker-compose podman-docker containerd runc || true
-fi
+apt-get remove -y docker.io docker-doc docker-compose docker-compose-v2 podman-docker containerd runc || true
 
 # ---------- 2) Docker-Repo einrichten ----------
 info "Richte offizielles Docker-Repository ein…"
 apt-get update
 apt-get install -y ca-certificates curl gnupg lsb-release
+
 install -m 0755 -d /etc/apt/keyrings
 
-if [[ "$OS" == "debian" ]]; then
-  curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc
-  chmod a+r /etc/apt/keyrings/docker.asc
-  echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian ${CODENAME} stable" \
-    > /etc/apt/sources.list.d/docker.list
-else
-  curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
-  chmod a+r /etc/apt/keyrings/docker.asc
-  echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu ${CODENAME} stable" \
-    > /etc/apt/sources.list.d/docker.list
-fi
+# Key + Checksum laden
+TMP_KEY="$(mktemp)"
+TMP_SUM="$(mktemp)"
+curl -fsSL "https://download.docker.com/linux/$OS/gpg" -o "$TMP_KEY"
+curl -fsSL "https://download.docker.com/linux/$OS/gpg.sha256" -o "$TMP_SUM"
+
+# Prüfen
+(cd "$(dirname "$TMP_KEY")" && sha256sum -c "$TMP_SUM") || die "GPG-Key Checksum-Verifikation fehlgeschlagen!"
+
+# Installieren
+gpg --dearmor -o /etc/apt/keyrings/docker.gpg "$TMP_KEY"
+chmod a+r /etc/apt/keyrings/docker.gpg
+rm -f "$TMP_KEY" "$TMP_SUM"
+
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/$OS ${CODENAME} stable" \
+  > /etc/apt/sources.list.d/docker.list
 
 # ---------- 3) Docker installieren ----------
 info "Installiere Docker Engine, CLI, containerd, Buildx & Compose-Plugin…"
@@ -80,7 +88,8 @@ apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin do
 
 # ---------- 4) Dienste aktivieren ----------
 info "Aktiviere & starte Dienste…"
-systemctl enable --now docker.service containerd.service
+systemctl enable --now docker.service
+systemctl enable --now containerd.service || systemctl enable --now containerd || true
 
 # ---------- 5) Benutzer optional hinzufügen ----------
 if [[ -n "$ADD_USER" ]]; then
