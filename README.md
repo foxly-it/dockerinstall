@@ -17,10 +17,10 @@ sudo ./install.sh [OPTIONS]
 ```
 
 ### Wichtige Optionen
-`--add-user USER` – Fügt USER der Gruppe docker hinzu (root-ähnliche Rechte!)
-`--no-hello` – Überspringt den hello-world-Kurztest
-`--no-clear` – Bildschirm nicht löschen (Logs bleiben sichtbar)
-`--log-file=/pfad/datei.log` – Alternativer Logfile-Pfad
+- `--add-user USER` – Fügt USER der Gruppe docker hinzu (root-ähnliche Rechte!)
+- `--no-hello` – Überspringt den hello-world-Kurztest
+- `--no-clear` – Bildschirm nicht löschen (Logs bleiben sichtbar)
+- `--log-file=/pfad/datei.log` – Alternativer Logfile-Pfad
 
 ### 👉 Nach erfolgreicher Installation prüfen:
 
@@ -36,9 +36,9 @@ sudo ./uninstall.sh [OPTIONS]
 ```
 
 ### Wichtige Optionen
-`--keep-data` – Behalte /var/lib/docker & /var/lib/containerd
-`--no-clear` – Bildschirm nicht löschen
-`--log-file=/pfad/datei.log` – Alternativer Logfile-Pfad
+- `--keep-data` – Behalte /var/lib/docker & /var/lib/containerd
+- `--no-clear` – Bildschirm nicht löschen
+- `--log-file=/pfad/datei.log` – Alternativer Logfile-Pfad
 
 ### 🔒 Sicherheit
 GPG-Key wird mit SHA256 geprüft, bevor das Docker-Repo eingebunden wird.
