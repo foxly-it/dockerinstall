@@ -1,6 +1,6 @@
 # 🐳 Docker & Docker Compose Installer
 
-[![License](https://img.shields.io/github/license/foxly-it/dockerinstall?style=for-the-badge&cacheSeconds=3600)](LICENSE)
+[![License](https://img.shields.io/github/license/foxly-it/dockerinstall?style=for-the-badge)](LICENSE)
 [![Stars](https://img.shields.io/github/stars/foxly-it/dockerinstall?style=for-the-badge)](https://github.com/foxly-it/dockerinstall/stargazers)
 [![Issues](https://img.shields.io/github/issues/foxly-it/dockerinstall?style=for-the-badge)](https://github.com/foxly-it/dockerinstall/issues)
 [![Shell Script](https://img.shields.io/badge/language-Bash-blue?style=for-the-badge)](#)
