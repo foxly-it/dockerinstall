@@ -1,29 +1,80 @@
-# Ignore all files by default
-*
+# ==========================
+# 🦊 Foxly IT — Dotfiles
+# .gitignore
+# ==========================
 
-# But keep the main installation scripts
-!install.sh
-!uninstall.sh
-
-# Keep documentation
-!README.md
-
-# Keep the .gitignore itself
-!.gitignore
-
-# Ignore common system files
+# --- System / OS ---
 .DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
 Thumbs.db
+desktop.ini
 
-# Ignore log files
-*.log
-
-# Ignore temporary files
-*.tmp
-*.temp
+# --- Editor / IDE ---
+.vscode/
+.idea/
+*.swp
+*.swo
 *~
+*.bak
+*.tmp
+warp.md
+
+# --- Python / Cache (für evtl. Tools oder Scripts) ---
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+.eggs/
+
+# --- Logs / Runtime ---
+*.log
+*.pid
+*.seed
+*.pid.lock
+nohup.out
+
+# --- Shell / Temporary ---
+*.old
+*.orig
+*.retry
+*.save
+*.test
+*.local
+*.secret
+.env
+.env.*
+tmp/
+temp/
+
+# --- Node / Frontend (falls Webtools zum Einsatz kommen) ---
+node_modules/
+dist/
+.cache/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# --- Docker / Compose ---
+docker-compose.override.yml
+.env.docker
+*.tar
+*.img
+
+# --- Backups / Archive ---
+*.zip
+*.gz
+*.7z
+*.tar.gz
+*.bak
+*.backup
+
+# --- Assets ---
+# Behalte nur statische Inhalte wie Badges im Repo.
+# Exkludiere automatisch generierte Screenshots oder temporäre Assets.
+assets/screenshots/
+assets/tmp/
+assets/generated/
+
+# --- System Configs (nur lokale Maschinen) ---
+/etc/
+/var/
+/opt/tmp/
