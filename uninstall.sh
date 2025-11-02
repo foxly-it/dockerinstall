@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Docker & Compose Uninstaller – Foxly edition (with Whale + Progressbar)
+# Docker & Compose Uninstaller – Foxly edition (Banner + Progress)
 set -Eeuo pipefail
 
 # ----- Flags -----
@@ -67,7 +67,7 @@ if [ "$KEEP_DATA" -eq 0 ]; then
 else
   echo "Daten behalten: /var/lib/docker und /var/lib/containerd wurden nicht gelöscht."
 fi
-progress_step "${PHASES[3]}}"
+progress_step "${PHASES[3]}"
 
 # 5) Group note
 if getent group docker >/dev/null 2>&1; then

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Docker & Compose Installer – Foxly edition (with Whale + Progressbar)
+# Docker & Compose Installer – Foxly edition (Banner + Progress)
 set -Eeuo pipefail
 
 # ----- Defaults / Flags -----
@@ -70,7 +70,7 @@ progress_step "${PHASES[1]}"
 
 # 3) Repo + Key
 if [ ! -f /etc/apt/keyrings/docker.gpg ]; then
-  curl -fsSL https://download.docker.com/linux/$(. /etc/os-release; echo "$ID")/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+  curl -fsSL "https://download.docker.com/linux/$(. /etc/os-release; echo "$ID")/gpg" | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
   chmod a+r /etc/apt/keyrings/docker.gpg
 fi
 . /etc/os-release
