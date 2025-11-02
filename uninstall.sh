@@ -1,87 +1,84 @@
 #!/usr/bin/env bash
-# Deinstalliert Rootful Docker + Compose v2. Optional Daten behalten.
+# Docker & Compose Uninstaller – Foxly edition (with Whale + Progressbar)
+set -Eeuo pipefail
 
-set -euo pipefail
-CSI='\033['; BLUE="${CSI}1;34m"; YEL="${CSI}1;33m"; RED="${CSI}1;31m"; END="${CSI}0m"
-info(){ echo -e "${BLUE}[INFO]${END} $*"; }
-warn(){ echo -e "${YEL}[WARN]${END} $*"; }
-err(){  echo -e "${RED}[ERR ]${END} $*"; }
-die(){  err "$*"; exit 1; }
+# ----- Flags -----
+KEEP_DATA=0
+CLEAR=1
+LOG_FILE="/var/log/docker-uninstall.log"
 
-KEEP_DATA=""
-LOGFILE="/var/log/docker-uninstall.log"
-NO_CLEAR=""
-
-# ---------- Args ----------
-while [[ $# -gt 0 ]]; do
-  case "$1" in
-    --keep-data) KEEP_DATA="1";;
-    --no-clear) NO_CLEAR="1";;
-    --log-file=*) LOGFILE="${1#*=}";;
-    -h|--help)
-      cat <<EOF
-Usage: sudo ./uninstall.sh [--keep-data] [--no-clear] [--log-file=/path/file.log]
-  --keep-data     Behält /var/lib/docker und /var/lib/containerd (keine Datenlöschung)
-  --no-clear      Bildschirm nicht löschen
-  --log-file=PATH Pfad fürs Logfile (Default: $LOGFILE)
-EOF
-      exit 0;;
+for arg in "$@"; do
+  case "$arg" in
+    --keep-data) KEEP_DATA=1;;
+    --no-clear)  CLEAR=0;;
+    --log-file=*) LOG_FILE="${arg#*=}";;
+    --no-color)  :;;
+    *) ;;
   esac
-  shift
 done
 
-# ---------- Preconditions ----------
-[[ $EUID -eq 0 ]] || die "Bitte als root ausführen (sudo ./uninstall.sh)."
-[[ -r /etc/os-release ]] || die "/etc/os-release nicht gefunden"
-. /etc/os-release
-OS="${ID:-}"; [[ "$OS" =~ ^(debian|ubuntu)$ ]] || die "Nur Debian/Ubuntu werden unterstützt."
+mkdir -p "$(dirname "$LOG_FILE")"
+exec > >(tee -a "$LOG_FILE") 2>&1
 
-# ---------- Logging / Clean screen ----------
-mkdir -p "$(dirname "$LOGFILE")"
-exec > >(stdbuf -oL tee -a "$LOGFILE") 2>&1
-[[ -z "$NO_CLEAR" ]] && echo -ne "\033c"
-info "Logfile: $LOGFILE"
+# ----- Visuals -----
+# shellcheck disable=SC1091
+. "$(dirname "$0")/visuals.sh" 2>/dev/null || . "./visuals.sh"
+parse_no_color_flag "$@"
+[ "$CLEAR" -eq 1 ] && tput clear 2>/dev/null || true
+whale_banner "uninstall" "$@"
 
-# ---------- Services stoppen ----------
-info "Stoppe & deaktiviere Docker-Dienste…"
-systemctl disable --now docker.service docker.socket || true
-systemctl disable --now containerd.service || systemctl disable --now containerd || true
+# ----- Root/Distro -----
+if [ "${EUID:-$(id -u)}" -ne 0 ]; then
+  echo "Bitte mit sudo/root ausführen."; exit 1
+fi
+if ! command -v apt-get >/dev/null 2>&1; then
+  echo "Dieses Script unterstützt aktuell apt-basierte Systeme (Debian/Ubuntu)."; exit 1
+fi
 
-# ---------- Laufende Container/Objekte entfernen ----------
-info "Entferne Container/Images/Volumes/Netzwerke…"
-docker ps -aq | xargs -r docker rm -f || true
-docker images -aq | xargs -r docker rmi -f || true
-docker volume ls -q | xargs -r docker volume rm || true
-docker network ls -q --filter type=custom | xargs -r docker network rm || true
+PHASES=(
+  "Dienste stoppen"
+  "Pakete entfernen"
+  "Repo & Key entfernen"
+  "Datenverzeichnisse (optional)"
+  "Gruppen/Users Hinweis"
+  "Cleanup"
+)
+progress_init "${#PHASES[@]}" "Uninstall dockerinstall – Entferne Komponenten"
 
-# ---------- Pakete entfernen ----------
-info "Purge Docker-Pakete…"
-apt-get purge -y docker-ce docker-ce-cli containerd.io containerd docker-buildx-plugin docker-compose-plugin docker-compose-v2 || true
-apt-get autoremove -y || true
+# 1) Stop services
+systemctl stop docker 2>/dev/null || true
+systemctl stop containerd 2>/dev/null || true
+progress_step "${PHASES[0]}"
 
-# ---------- Repo & Keys entfernen ----------
-info "Entferne Docker-Repo & Keys…"
-rm -f /etc/apt/sources.list.d/docker.list \
-      /etc/apt/keyrings/docker.asc \
-      /etc/apt/keyrings/docker.gpg || true
-apt-get update || true
+# 2) Remove packages
+apt-get purge -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin docker-compose 2>/dev/null || true
+apt-get autoremove -y --purge 2>/dev/null || true
+progress_step "${PHASES[1]}"
 
-# ---------- Daten optional entfernen ----------
-if [[ -z "$KEEP_DATA" ]]; then
-  info "Lösche Daten- & Config-Verzeichnisse…"
-  rm -rf /var/lib/docker /var/lib/containerd /etc/docker /var/run/docker.sock || true
+# 3) Remove repo/key
+rm -f /etc/apt/sources.list.d/docker.list
+rm -f /etc/apt/keyrings/docker.gpg
+apt-get update -y
+progress_step "${PHASES[2]}"
+
+# 4) Data (optional)
+if [ "$KEEP_DATA" -eq 0 ]; then
+  rm -rf /var/lib/docker /var/lib/containerd
 else
-  warn "Daten behalten: /var/lib/docker und /var/lib/containerd bleiben bestehen."
+  echo "Daten behalten: /var/lib/docker und /var/lib/containerd wurden nicht gelöscht."
 fi
+progress_step "${PHASES[3]}}"
 
-# ---------- docker-Gruppe optional entfernen ----------
+# 5) Group note
 if getent group docker >/dev/null 2>&1; then
-  if ! getent group docker | awk -F: '{print $4}' | grep -q . ; then
-    info "Entferne leere Gruppe 'docker'…"
-    groupdel docker 2>/dev/null || true
-  else
-    warn "Gruppe 'docker' hat noch Mitglieder – nicht entfernt."
-  fi
+  echo "Hinweis: Gruppe 'docker' existiert ggf. weiterhin. Bei Bedarf manuell entfernen, wenn leer: groupdel docker"
 fi
+progress_step "${PHASES[4]}"
 
-info "Deinstallation abgeschlossen."
+# 6) Cleanup
+rm -f /etc/systemd/system/docker.service.d/* 2>/dev/null || true
+systemctl daemon-reload || true
+progress_step "${PHASES[5]}"
+
+progress_done "Deinstallation abgeschlossen"
+echo "🧹 Docker entfernt. Log: $LOG_FILE"
