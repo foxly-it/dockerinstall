@@ -1,4 +1,6 @@
-# 🐳 Foxly dockerinstall – Docker Installer, Upgrader & Uninstaller
+# 🐳 Foxly dockerinstall — Docker Installer, Upgrader & Uninstaller
+
+[🇩🇪 Deutsch](#-deutsch) | [🇬🇧 English](#-english)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-informational?style=for-the-badge)](LICENSE)
 [![Stars](https://img.shields.io/github/stars/foxly-it/dockerinstall?style=for-the-badge)](https://github.com/foxly-it/dockerinstall/stargazers)
@@ -8,211 +10,226 @@
 
 ---
 
-## 🧩 Übersicht
+## 🇩🇪 Deutsch
 
-**dockerinstall.sh** ist ein komplett eigenständiges **Single-File Docker Management Tool**:
+### 🧩 Übersicht
 
-- Installiert Docker Engine + CLI + Buildx + Compose
-- Führt ein **Upgrade** durch (Repo fix + Reinstall)
-- Entfernt Docker vollständig (inkl. optionaler Daten)
-- Integrierte:
-  - **Backup-Funktion**  
-  - **Self-Check**  
-  - **Repo-Korrektur**  
-  - **TTY-Optimierte Visuals (ASCII-Fox + Progressbar)**  
-  - **Nicht-Interaktiver Modus für Skripte und Automationen**
+**dockerinstall.sh** ist ein eigenständiges **Single-File-Tool zur Verwaltung von Docker** auf Linux-Systemen.
 
-Getestet auf:
+Es deckt den kompletten Lebenszyklus ab:
 
-- 🐧 **Debian 12 (Bookworm)**  
-- 🐧 **Debian 13 (Trixie)**  
-- 🟪 **Ubuntu 22.04+ / 24.04 LTS**
+- Installation von Docker Engine & Plugins  
+- sauberes Upgrade bestehender Installationen  
+- vollständige Deinstallation (optional inkl. Daten)  
+- integrierter Self-Check und Backup-Funktion  
+- interaktive **und** nicht-interaktive Nutzung  
 
-Das Script erkennt Distribution & Codename automatisch über `/etc/os-release`.
+Kein Framework, keine Abhängigkeiten – **ein Skript, volle Kontrolle**.
 
 ---
 
-## ✨ Features (v2.x)
+### 🖥️ Unterstützte Systeme
 
-### ⚙️ Installation
-- Entfernt alte/conflicting Docker-Pakete (`docker.io`, alte Compose, containerd Varianten)
-- Richtet **offizielles Docker-Repo inkl. GPG-Key** ein
-- Installiert:
-  - `docker-ce`
-  - `docker-ce-cli`
-  - `containerd.io`
-  - `docker-buildx-plugin`
-  - `docker-compose-plugin`
-- Aktiviert systemd-Dienste
-- Optional: fügt Benutzer der `docker`-Gruppe hinzu
+Getestet und produktiv genutzt auf:
 
-### 🔧 Upgrade
-- Überprüft Repository und korrigiert es (Debian/Ubuntu-aware)
-- Reinstalliert Docker + Plugins sauber
-- Erneuert Dienste
-- Optional: `--backup-data` vorher
-- Optional: `--force-upgrade`
+- Debian 12 (Bookworm)
+- Debian 13 (Trixie)
+- Ubuntu 22.04 / 24.04 LTS
 
-### 🗑️ Uninstall
-- Entfernt alle Docker-Pakete
-- Entfernt Repository + GPG-Key
-- Optional: Daten löschen oder behalten
-- Bereinigt systemd
-
-### 🧪 Self-Check
-`--self-check` prüft u. a.:
-
-- root-Rechte  
-- apt-System  
-- curl / gpg  
-- systemd  
-- APT-Lock  
-- Schreibrechte unter `/var/lib`  
-- Docker-Status  
-
-### 📦 Backup
-`--backup-data` erzeugt ein `.tar.gz`-Backup aus:
-
-- `/var/lib/docker`
-- `/var/lib/containerd`
-
-### 💻 TTY-optimierte Visuals
-- Foxly-ASCII-Art  
-- ruhige Bubble-Animation  
-- Mini-Progressbar mit dynamischer Breite  
-- compose-pull-3-Line-View  
+Distribution und Codename werden automatisch über `/etc/os-release` erkannt.
 
 ---
 
-## 🚀 Nutzung
+### ✨ Features (v2.x)
 
-### 📥 Klonen
+**Installation**
+- entfernt alte oder konfliktbehaftete Docker-Pakete
+- richtet das offizielle Docker-APT-Repository inkl. GPG-Key ein
+- installiert Docker Engine, CLI, Buildx & Compose Plugin
+- aktiviert systemd-Dienste
+- optional: Benutzer zur `docker`-Gruppe hinzufügen
 
-```bash
-git clone https://github.com/foxly-it/dockerinstall.git
-cd dockerinstall
-```
+**Upgrade**
+- prüft und repariert Repository-Konfiguration
+- reinstalliert Docker & Plugins sauber
+- optional: Backup, Force-Upgrade, non-interactive
 
-### ▶️ Starten (interaktiv)
+**Uninstall**
+- entfernt Docker-Pakete, Repo & GPG-Keys
+- optional: Docker-Daten behalten oder löschen
+- systemd-Bereinigung
 
-```bash
-sudo ./dockerinstall.sh
-```
+**Self-Check**
+- Root-Rechte
+- APT-Status & Locks
+- curl / gpg
+- systemd
+- Schreibrechte unter `/var/lib`
+- Docker-Status
 
-Du bekommst ein Menü:
+**Backup**
+- `.tar.gz`-Backup von:
+  - `/var/lib/docker`
+  - `/var/lib/containerd`
 
-```
-1) Installieren
-2) Upgrade
-9) Deinstallieren
-```
-
----
-
-## ⚙️ Optionen
-
-### Allgemein
-
-```bash
-sudo ./dockerinstall.sh [install|upgrade|uninstall] [OPTIONS]
-```
-
-### Optionen im Detail
-
-| Option | Beschreibung |
-|--------|--------------|
-| `--add-user=USER` | Fügt USER zur `docker`-Gruppe hinzu |
-| `--no-hello` | Überspringt den Hello-World-Test |
-| `--no-clear` | Terminal nicht löschen |
-| `--log-file=/pfad/log.txt` | Logpfad setzen |
-| `--non-interactive` | Kein Menü, keine Prompts |
-| `--backup-data` | Vor Upgrade/Uninstall Backup erstellen |
-| `--force-upgrade` | Auch upgraden, wenn Repo ok / Version identisch |
-| `--self-check` | Führt nur den Systemcheck aus |
-
-### Beispiele
-
-Installation ohne Hello-World:
-
-```bash
-sudo ./dockerinstall.sh install --no-hello
-```
-
-Upgrade + Backup + non-interactive:
-
-```bash
-sudo ./dockerinstall.sh upgrade --backup-data --non-interactive
-```
 
 ---
 
-## 🗑️ Deinstallation
+### 🚀 Nutzung
 
-```bash
-sudo ./dockerinstall.sh uninstall
-```
+Repository klonen:
 
-Mit Entfernen aller Daten:
+    git clone https://github.com/foxly-it/dockerinstall.git
+    cd dockerinstall
 
-```bash
-sudo ./dockerinstall.sh uninstall --backup-data --non-interactive
-```
+Interaktiv starten:
 
----
+    sudo ./dockerinstall.sh
 
-## 🧾 Logging
+Menü:
 
-Alle Aktionen werden protokolliert:
-
-- `/var/log/docker-install.log`
-- `/var/log/docker-uninstall.log`
+    1) Installieren
+    2) Upgrade
+    9) Deinstallieren
 
 ---
 
-## 🧰 Troubleshooting
+### ⚙️ CLI-Modus & Optionen
 
-| Problem | Mögliche Lösung |
-|---------|------------------|
-| GPG/Repo-Fehler | Internet prüfen, `ca-certificates curl gnupg` installieren |
-| Konflikt-Pakete | Script entfernt sie automatisch – nochmal ausführen |
-| Docker startet nicht | `systemctl status docker`, Log prüfen |
-| Upgrade passiert nicht | Menü gewählt? → ggf. `--force-upgrade` nutzen |
+    sudo ./dockerinstall.sh [install|upgrade|uninstall] [OPTIONS]
 
----
+Optionen:
 
-## 🧪 Unterstützte Distributionen
+    --add-user=USER        Benutzer zur docker-Gruppe hinzufügen
+    --no-hello             Hello-World-Test überspringen
+    --no-clear             Terminal nicht löschen
+    --log-file=PATH        Eigenen Logpfad setzen
+    --non-interactive      Keine Prompts, kein Menü
+    --backup-data          Backup vor Upgrade/Uninstall
+    --force-upgrade        Upgrade erzwingen
+    --self-check           Nur Systemcheck ausführen
 
-| Distribution | Status | Hinweis |
-|--------------|--------|---------|
-| Debian 12 | ✅ | vollständig getestet |
-| Debian 13 | ✅ | vollständig getestet |
-| Ubuntu 22.04+ | ✅ | vollständig getestet |
-| Mint / Pop!\_OS / Kali | ⚙️ | sollte funktionieren, aber ungetestet |
+Beispiele:
 
----
-
-## 🤝 Mitwirken
-
-PRs & Issues sind willkommen!  
-Feature-Wünsche, Bugreports oder Ideen gern hier melden:
-
-👉 https://github.com/foxly-it/dockerinstall/issues
+    sudo ./dockerinstall.sh install --no-hello
+    sudo ./dockerinstall.sh upgrade --backup-data --non-interactive
 
 ---
 
-## 🛡️ Sicherheit
+### 🧾 Logging
 
-Docker-Benutzer besitzen **root-ähnliche Rechte**.  
-Nur vertrauenswürdige Accounts der Gruppe `docker` hinzufügen.
+    /var/log/docker-install.log
+    /var/log/docker-uninstall.log
 
-Offizielle Docker Security Best Practices:  
+---
+
+### 🛡️ Sicherheit
+
+Mitglieder der `docker`-Gruppe besitzen **root-ähnliche Rechte**.  
+Nur vertrauenswürdige Benutzer hinzufügen.
+
+Docker Security Best Practices:  
 https://docs.docker.com/security/
 
 ---
 
-## 📜 Lizenz
+## 🇬🇧 English
 
-Dieses Projekt steht unter **MIT License**.  
-Siehe [LICENSE](LICENSE).
+### 🧩 Overview
+
+**dockerinstall.sh** is a standalone **single-file tool for managing Docker** on Linux systems.
+
+It covers the complete Docker lifecycle:
+
+- installation of Docker Engine & plugins  
+- clean upgrades of existing installations  
+- full removal (optionally including data)  
+- integrated self-check and backup  
+- interactive **and** non-interactive operation  
+
+No frameworks, no dependencies — **one script, full control**.
 
 ---
+
+### 🖥️ Supported Systems
+
+Tested and used in production on:
+
+- Debian 12 (Bookworm)
+- Debian 13 (Trixie)
+- Ubuntu 22.04 / 24.04 LTS
+
+Distribution and codename are detected automatically via `/etc/os-release`.
+
+---
+
+### ✨ Features (v2.x)
+
+**Installation**
+- removes conflicting Docker packages
+- sets up the official Docker APT repository incl. GPG key
+- installs Docker Engine, CLI, Buildx & Compose plugin
+- enables systemd services
+- optional docker group user setup
+
+**Upgrade**
+- verifies and fixes repository configuration
+- clean reinstall of Docker & plugins
+- optional backup, force-upgrade, non-interactive mode
+
+**Uninstall**
+- removes Docker packages, repo and GPG keys
+- optional data removal
+- systemd cleanup
+
+**Self-Check**
+- root privileges
+- APT status & locks
+- curl / gpg
+- systemd
+- write access under `/var/lib`
+- Docker status
+
+**Backup**
+- creates a `.tar.gz` backup of:
+  - `/var/lib/docker`
+  - `/var/lib/containerd`
+
+
+---
+
+### 🚀 Usage
+
+Clone the repository:
+
+    git clone https://github.com/foxly-it/dockerinstall.git
+    cd dockerinstall
+
+Run interactively:
+
+    sudo ./dockerinstall.sh
+
+---
+
+### ⚙️ CLI Mode & Options
+
+    sudo ./dockerinstall.sh [install|upgrade|uninstall] [OPTIONS]
+
+---
+
+### 🛡️ Security Note
+
+Members of the `docker` group have **root-like privileges**.  
+Only add trusted users.
+
+---
+
+## 📜 License
+
+MIT License  
+See [LICENSE](LICENSE).
+
+---
+
+Foxly IT  
+Reboot required — but planned.
