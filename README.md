@@ -233,3 +233,5 @@ See [LICENSE](LICENSE).
 
 Foxly IT  
 Reboot required — but planned.
+
+![Alt](https://repobeats.axiom.co/api/embed/49f262ca5e7653bb4718e0b5c55547018a7ce48b.svg "Repobeats analytics image")
