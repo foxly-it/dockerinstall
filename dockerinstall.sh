@@ -232,8 +232,9 @@ detect_os() {
     OS_CODENAME="${VERSION_CODENAME:-}"
   fi
 
-  [ -n "$OS_VERSION" ] && [ -n "$OS_CODENAME" ] || \
+  if [ -z "$OS_VERSION" ] || [ -z "$OS_CODENAME" ]; then
     die "Distribution oder Codename konnte nicht erkannt werden."
+  fi
 
   case "${OS_ID}:${OS_VERSION}" in
     debian:11|debian:12|debian:13|ubuntu:22.04|ubuntu:24.04|ubuntu:25.10|ubuntu:26.04) ;;
