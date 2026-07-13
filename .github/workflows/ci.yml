@@ -1,0 +1,22 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  shell:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install ShellCheck
+        run: sudo apt-get update && sudo apt-get install -y shellcheck
+      - name: Check Bash syntax
+        run: bash -n dockerinstall.sh tests/integration.sh tests/mock-command.sh
+      - name: Run integration simulations
+        run: bash tests/integration.sh
+      - name: Run ShellCheck
+        run: shellcheck dockerinstall.sh tests/integration.sh tests/mock-command.sh
